@@ -3,8 +3,8 @@ package controllers
 import (
 	"net/http"
 
-	"github.com/HudYuSa/mod-name/database/models"
-	"github.com/HudYuSa/mod-name/pkg/dtos"
+	"github.com/HudYuSa/comments/database/models"
+	"github.com/HudYuSa/comments/pkg/dtos"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
@@ -31,12 +31,7 @@ func (uc *userController) GetMe(ctx *gin.Context) {
 		return
 	}
 
-	userResponse := dtos.DBUserToUserResponse(&currentUser)
-
-	dtos.RespondWithJson(ctx, http.StatusOK, dtos.WebResponse{
-		Message: "Successfully get user data",
-		Data: gin.H{
-			"user": userResponse,
-		},
+	dtos.RespondWithJson(ctx, http.StatusOK, gin.H{
+		"user": dtos.UserToUserResponse(&currentUser),
 	})
 }

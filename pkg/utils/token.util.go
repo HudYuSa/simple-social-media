@@ -3,8 +3,10 @@ package utils
 import (
 	"encoding/base64"
 	"fmt"
+	"strings"
 	"time"
 
+	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt"
 )
 
@@ -36,7 +38,7 @@ func CreateToken(ttl time.Duration, payload any, privateKey string) (string, err
 		return "", fmt.Errorf("create: sign token: %w", err)
 	}
 
-	fmt.Println(claims)
+	// fmt.Println(claims)
 	return token, nil
 }
 
@@ -52,7 +54,6 @@ func ValidateToken(token string, publicKey string) (any, error) {
 	}
 
 	parsedToken, err := jwt.Parse(token, func(t *jwt.Token) (interface{}, error) {
-		fmt.Println(t)
 		// write any validation u want
 		if _, ok := t.Method.(*jwt.SigningMethodRSA); !ok {
 			return nil, fmt.Errorf("unexpected method: %s", t.Header["alg"])
@@ -70,6 +71,22 @@ func ValidateToken(token string, publicKey string) (any, error) {
 	if !ok || !parsedToken.Valid {
 		return nil, fmt.Errorf("validate: invalid token")
 	}
-	fmt.Println(claims)
 	return claims["sub"], nil
+}
+
+func GetToken(ctx *gin.Context, cookieName string, headerName string) (token string) {
+	tokenCookie, err := ctx.Cookie(cookieName)
+	tokenHeader := ctx.Request.Header.Get(headerName)
+
+	tokenHeaderFieldsSplits := strings.Fields(tokenHeader)
+
+	if len(tokenHeaderFieldsSplits) != 0 && tokenHeaderFieldsSplits[0] == "Bearer" {
+		token = tokenHeaderFieldsSplits[1]
+	} else if err == nil {
+		// if no header token check if there's cookie token
+		// if no error cookie token then
+		token = tokenCookie
+	}
+
+	return
 }

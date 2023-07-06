@@ -2,13 +2,14 @@ package controllers
 
 import (
 	"net/http"
+	"reflect"
 	"strings"
 	"time"
 
-	"github.com/HudYuSa/mod-name/database/models"
-	"github.com/HudYuSa/mod-name/internal/config"
-	"github.com/HudYuSa/mod-name/pkg/dtos"
-	"github.com/HudYuSa/mod-name/pkg/utils"
+	"github.com/HudYuSa/comments/database/models"
+	"github.com/HudYuSa/comments/internal/config"
+	"github.com/HudYuSa/comments/pkg/dtos"
+	"github.com/HudYuSa/comments/pkg/utils"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
@@ -16,6 +17,12 @@ import (
 type AuthController interface {
 	SignUpUser(ctx *gin.Context)
 	SignInUser(ctx *gin.Context)
+	RefreshAccessToken(ctx *gin.Context)
+	LogOutUser(ctx *gin.Context)
+	DeleteUser(ctx *gin.Context)
+	// VerifyEmail(ctx *gin.Context)
+	// ForgotPassword(ctx *gin.Context)
+	// ResetPassword(ctx *gin.Context)
 }
 
 type authController struct {
@@ -68,18 +75,12 @@ func (ac *authController) SignUpUser(ctx *gin.Context) {
 		dtos.RespondWithError(ctx, http.StatusConflict, "user with that email already exist")
 		return
 	} else if result.Error != nil {
-		dtos.RespondWithError(ctx, http.StatusConflict, "something bad just happens")
+		dtos.RespondWithError(ctx, http.StatusBadGateway, "something bad just happen")
 		return
 	}
 
-	// create user response
-	userResponse := dtos.DBUserToUserResponse(&newUser)
-
 	// send the response
-	dtos.RespondWithJson(ctx, http.StatusCreated, dtos.WebResponse{
-		Message: "successfully create new user",
-		Data:    userResponse,
-	})
+	dtos.RespondWithJson(ctx, http.StatusCreated, dtos.UserToUserResponse(&newUser))
 }
 
 func (ac *authController) SignInUser(ctx *gin.Context) {
@@ -127,11 +128,85 @@ func (ac *authController) SignInUser(ctx *gin.Context) {
 	ctx.SetCookie("refresh_token", refreshToken, config.GlobalConfig.RefreshTokenMaxAge*60, "/", "localhost", false, true)
 	ctx.SetCookie("logged_in", "true", config.GlobalConfig.AccessTokenMaxAge, "/", "localhost", false, false)
 
-	dtos.RespondWithJson(ctx, http.StatusOK, dtos.WebResponse{
-		Message: "successfully login user",
-		Data: gin.H{
-			"access_token":  accessToken,
-			"refresh_token": refreshToken,
-		},
+	dtos.RespondWithJson(ctx, http.StatusOK, gin.H{
+		"access_token":  accessToken,
+		"refresh_token": refreshToken,
 	})
 }
+
+func (ac *authController) RefreshAccessToken(ctx *gin.Context) {
+
+	refreshToken := utils.GetToken(ctx, "refresh_token", "x-refresh-token")
+
+	// if there's no token from header or cookie
+	if reflect.ValueOf(refreshToken).IsZero() {
+		dtos.RespondWithError(ctx, http.StatusUnauthorized, "you're not allowed to access this endpoint")
+		return
+	}
+
+	// validate the token
+	sub, err := utils.ValidateToken(refreshToken, config.GlobalConfig.RefreshTokenPublicKey)
+
+	if err != nil {
+		dtos.RespondWithError(ctx, http.StatusUnauthorized, err.Error())
+		return
+	}
+
+	// find the user that has the refresh token
+	var user models.User
+
+	result := ac.DB.First(&user, "id = ?", sub)
+	if result.Error != nil {
+		dtos.RespondWithError(ctx, http.StatusNotFound, "the user belonging to this token doesn't exist anymore")
+		return
+	}
+
+	// reissue new accesstoken
+	accessToken, err := utils.CreateToken(config.GlobalConfig.AccessTokenExpiresIn, user.ID, config.GlobalConfig.AccessTokenPrivateKey)
+	if err != nil {
+		dtos.RespondWithError(ctx, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	// set new accesstoken cookie
+	ctx.SetCookie("access_token", accessToken, config.GlobalConfig.AccessTokenMaxAge*60, "/", "localhost", false, true)
+	ctx.SetCookie("logged_in", "true", config.GlobalConfig.AccessTokenMaxAge*60, "/", "localhost", false, false)
+
+	dtos.RespondWithJson(ctx, http.StatusOK, gin.H{
+		"access_token": accessToken,
+	})
+}
+
+func (ac *authController) LogOutUser(ctx *gin.Context) {
+	ctx.SetCookie("access_token", "", -1, "/", "localhost", false, true)
+	ctx.SetCookie("refresh_token", "", -1, "/", "localhost", false, true)
+	ctx.SetCookie("logged_in", "", -1, "/", "localhost", false, false)
+
+	dtos.RespondWithJson(ctx, http.StatusOK, "successfully logout user")
+}
+
+func (ac *authController) DeleteUser(ctx *gin.Context) {
+	currentUser := ctx.MustGet("currentUser").(models.User)
+
+	// find user
+	var user models.User
+	result := ac.DB.Where("id = ?", currentUser.ID).Delete(&user)
+	if result.Error != nil {
+		switch result.Error.Error() {
+		case "record not found":
+			dtos.RespondWithError(ctx, http.StatusNotFound, "cannot delete user")
+		default:
+			dtos.RespondWithError(ctx, http.StatusBadGateway, result.Error.Error())
+		}
+		return
+	}
+
+	dtos.RespondWithJson(ctx, http.StatusNoContent, "successfully delete user")
+}
+
+// func (ac *authController) ForgotPassword(ctx *gin.Context) {
+// }
+
+// func (ac *authController) ResetPassword(ctx *gin.Context) {
+// 	panic("not implemented") // TODO: Implement
+// }

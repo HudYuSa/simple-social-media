@@ -1,4 +1,4 @@
-module github.com/HudYuSa/mod-name
+module github.com/HudYuSa/comments
 
 go 1.20
 

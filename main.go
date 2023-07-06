@@ -4,10 +4,10 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/HudYuSa/mod-name/internal/config"
-	"github.com/HudYuSa/mod-name/internal/connection"
-	"github.com/HudYuSa/mod-name/pkg/controllers"
-	"github.com/HudYuSa/mod-name/pkg/routes"
+	"github.com/HudYuSa/comments/internal/config"
+	"github.com/HudYuSa/comments/internal/connection"
+	"github.com/HudYuSa/comments/pkg/controllers"
+	"github.com/HudYuSa/comments/pkg/routes"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
@@ -16,11 +16,13 @@ var (
 	server     *gin.Engine
 	corsConfig cors.Config
 
-	UserController controllers.UserController
-	UserRoutes     routes.UserRoutes
+	authController controllers.AuthController
+	userController controllers.UserController
+	postController controllers.PostController
 
-	AuthController controllers.AuthController
-	AuthRoutes     routes.AuthRoutes
+	authRoutes routes.AuthRoutes
+	userRoutes routes.UserRoutes
+	postRoutes routes.PostRoutes
 )
 
 func init() {
@@ -34,11 +36,13 @@ func init() {
 	// connect ke database
 	connection.ConnectDB(&config.GlobalConfig)
 
-	UserController = controllers.NewUserController(connection.DB)
-	UserRoutes = routes.NewUserRoutes(UserController)
+	authController = controllers.NewAuthController(connection.DB)
+	userController = controllers.NewUserController(connection.DB)
+	postController = controllers.NewPostController(connection.DB)
 
-	AuthController = controllers.NewAuthController(connection.DB)
-	AuthRoutes = routes.NewAuthRoutes(AuthController)
+	authRoutes = routes.NewAuthRoutes(authController)
+	userRoutes = routes.NewUserRoutes(userController)
+	postRoutes = routes.NewPostRoutes(postController)
 }
 
 func main() {
@@ -54,8 +58,9 @@ func main() {
 	})
 
 	// Routes
-	UserRoutes.SetupRoutes(router)
-	AuthRoutes.SetupRoutes(router)
+	authRoutes.SetupRoutes(router)
+	userRoutes.SetupRoutes(router)
+	postRoutes.SetupRoutes(router)
 
 	// run app
 	log.Fatal(server.Run(":" + config.GlobalConfig.ServerPort))

@@ -1,8 +1,8 @@
 package routes
 
 import (
-	"github.com/HudYuSa/mod-name/pkg/controllers"
-	"github.com/HudYuSa/mod-name/pkg/middleware"
+	"github.com/HudYuSa/comments/pkg/controllers"
+	"github.com/HudYuSa/comments/pkg/middleware"
 	"github.com/gin-gonic/gin"
 )
 

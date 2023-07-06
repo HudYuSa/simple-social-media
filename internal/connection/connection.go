@@ -6,7 +6,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/HudYuSa/mod-name/internal/config"
+	"github.com/HudYuSa/comments/internal/config"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
