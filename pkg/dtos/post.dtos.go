@@ -8,13 +8,13 @@ import (
 )
 
 type PostResponse struct {
-	ID        uuid.UUID `json:"id,omitempty" `
-	UserID    uuid.UUID `json:"user_id,omitempty" `
-	Title     string    `json:"title,omitempty" `
-	Photo     string    `json:"photo,omitempty" `
-	Content   string    `json:"content,omitempty" `
-	CreatedAt time.Time `json:"created_at,omitempty"`
-	UpdatedAt time.Time `json:"updated_at,omitempty"`
+	ID        *uuid.UUID `json:"id,omitempty" `
+	UserID    *uuid.UUID `json:"user_id,omitempty" `
+	Title     string     `json:"title,omitempty" `
+	Photo     string     `json:"photo,omitempty" `
+	Content   string     `json:"content,omitempty" `
+	CreatedAt time.Time  `json:"created_at,omitempty"`
+	UpdatedAt time.Time  `json:"updated_at,omitempty"`
 }
 
 type CreatePostInput struct {
@@ -29,8 +29,11 @@ type UpdatePostInput struct {
 	Content string `json:"content"`
 }
 
-func PostToPostResponse(post *models.Post) PostResponse {
-	return PostResponse{
+func PostToPostResponse(post *models.Post) *PostResponse {
+	if post == nil {
+		return nil
+	}
+	return &PostResponse{
 		ID:        post.ID,
 		UserID:    post.UserID,
 		Title:     post.Title,

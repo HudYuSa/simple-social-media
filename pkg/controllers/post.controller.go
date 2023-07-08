@@ -57,7 +57,7 @@ func (pc *postController) GetAllPost(ctx *gin.Context) {
 		dtos.RespondWithError(ctx, http.StatusBadGateway, result.Error.Error())
 	}
 
-	postsResponse := []dtos.PostResponse{}
+	postsResponse := []*dtos.PostResponse{}
 	for _, post := range posts {
 		postsResponse = append(postsResponse, dtos.PostToPostResponse(&post))
 	}

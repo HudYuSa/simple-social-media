@@ -16,13 +16,15 @@ var (
 	server     *gin.Engine
 	corsConfig cors.Config
 
-	authController controllers.AuthController
-	userController controllers.UserController
-	postController controllers.PostController
+	authController    controllers.AuthController
+	userController    controllers.UserController
+	postController    controllers.PostController
+	commentController controllers.CommentController
 
-	authRoutes routes.AuthRoutes
-	userRoutes routes.UserRoutes
-	postRoutes routes.PostRoutes
+	authRoutes    routes.AuthRoutes
+	userRoutes    routes.UserRoutes
+	postRoutes    routes.PostRoutes
+	commentRoutes routes.CommentRoutes
 )
 
 func init() {
@@ -39,10 +41,12 @@ func init() {
 	authController = controllers.NewAuthController(connection.DB)
 	userController = controllers.NewUserController(connection.DB)
 	postController = controllers.NewPostController(connection.DB)
+	commentController = controllers.NewCommentController(connection.DB)
 
 	authRoutes = routes.NewAuthRoutes(authController)
 	userRoutes = routes.NewUserRoutes(userController)
 	postRoutes = routes.NewPostRoutes(postController)
+	commentRoutes = routes.NewCommentRoutes(commentController)
 }
 
 func main() {
@@ -61,6 +65,7 @@ func main() {
 	authRoutes.SetupRoutes(router)
 	userRoutes.SetupRoutes(router)
 	postRoutes.SetupRoutes(router)
+	commentRoutes.SetupRoutes(router)
 
 	// run app
 	log.Fatal(server.Run(":" + config.GlobalConfig.ServerPort))

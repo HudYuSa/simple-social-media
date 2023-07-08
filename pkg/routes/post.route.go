@@ -20,7 +20,7 @@ func NewPostRoutes(postController controllers.PostController) PostRoutes {
 	}
 }
 
-func (pr postRoutes) SetupRoutes(rg *gin.RouterGroup) {
+func (pr *postRoutes) SetupRoutes(rg *gin.RouterGroup) {
 	router := rg.Group("posts")
 
 	router.Use(middleware.DeserializeUser())
