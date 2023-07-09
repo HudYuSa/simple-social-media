@@ -1,6 +1,7 @@
 package dtos
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/HudYuSa/comments/database/models"
@@ -8,42 +9,44 @@ import (
 )
 
 type CommentResponse struct {
-	ID              *uuid.UUID        `json:"id,omitempty"`
-	UserID          *uuid.UUID        `json:"user_id,omitempty"`
-	ParentCommentID *uuid.UUID        `json:"parent_comment_id"`
-	PostID          *uuid.UUID        `json:"post_id,omitempty"`
-	Content         *string           `json:"content,omitempty"`
-	CreatedAt       *time.Time        `json:"created_at,omitempty"`
-	ReplyCount      int64             `json:"reply_count"`
-	Comments        []CommentResponse `json:"comments,omitempty"`
-	Post            *PostResponse     `json:"post,omitempty"`
-	User            *UserResponse     `json:"user,omitempty"`
+	ID         uuid.UUID        `json:"id,omitempty"`
+	UserID     uuid.UUID        `json:"user_id,omitempty"`
+	PostID     uuid.UUID        `json:"post_id,omitempty"`
+	Content    string           `json:"content,omitempty"`
+	CreatedAt  time.Time        `json:"created_at,omitempty"`
+	ReplyCount int64            `json:"reply_count"`
+	User       *UserResponse    `json:"user,omitempty"`
+	Post       *PostResponse    `json:"post,omitempty"`
+	Replies    []ReplyResponse  `json:"replies,omitempty"`
+	Mention    *CommentResponse `json:"mention,omitempty"`
 }
 
 type CreateCommentInput struct {
-	ParentCommentID *uuid.UUID `json:"parent_comment_id,omitempty"`
-	PostID          *uuid.UUID `json:"post_id,omitempty" binding:"required"`
-	Content         string     `json:"content,omitempty" binding:"required"`
+	PostID  *uuid.UUID `json:"post_id,omitempty" binding:"required"`
+	Content string     `json:"content,omitempty" binding:"required"`
 }
 
 func CommentToCommentResponse(comment *models.Comment) *CommentResponse {
 	if comment == nil {
 		return nil
 	}
-	commentsResponse := []CommentResponse{}
-	for _, c := range comment.Comments {
-		commentsResponse = append(commentsResponse, *CommentToCommentResponse(&c))
+	var repliesResponse []ReplyResponse
+
+	for _, r := range comment.Replies {
+		replyResponse := *ReplyToReplyResponse(&r)
+		repliesResponse = append(repliesResponse, replyResponse)
 	}
+	fmt.Println(repliesResponse)
+
 	commentResponse := CommentResponse{
-		ID:              comment.ID,
-		UserID:          comment.UserID,
-		PostID:          comment.PostID,
-		ParentCommentID: comment.ParentCommentID,
-		Content:         comment.Content,
-		CreatedAt:       comment.CreatedAt,
-		Comments:        commentsResponse,
-		Post:            PostToPostResponse(comment.Post),
-		User:            UserToUserResponse(comment.User),
+		ID:        comment.ID,
+		UserID:    comment.UserID,
+		PostID:    comment.PostID,
+		Content:   comment.Content,
+		CreatedAt: comment.CreatedAt,
+		User:      UserToUserResponse(CheckNil(comment.User)),
+		Post:      PostToPostResponse(CheckNil(comment.Post)),
+		Replies:   repliesResponse,
 	}
 	// if comment.ParentCommentID != nil {
 	// 	commentResponse.ParentCommentID = comment.ParentCommentID

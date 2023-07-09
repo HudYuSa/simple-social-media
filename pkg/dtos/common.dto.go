@@ -2,6 +2,7 @@ package dtos
 
 import (
 	"errors"
+	"reflect"
 
 	"github.com/gin-gonic/gin"
 )
@@ -30,4 +31,12 @@ func RespondWithJson(ctx *gin.Context, code int, data any) {
 		Error: false,
 		Data:  data,
 	})
+}
+
+func CheckNil[t any](anyType t) *t {
+	if reflect.ValueOf(anyType).IsZero() {
+		return nil
+	} else {
+		return &anyType
+	}
 }

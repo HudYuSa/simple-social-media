@@ -20,11 +20,13 @@ var (
 	userController    controllers.UserController
 	postController    controllers.PostController
 	commentController controllers.CommentController
+	replyController   controllers.ReplyController
 
 	authRoutes    routes.AuthRoutes
 	userRoutes    routes.UserRoutes
 	postRoutes    routes.PostRoutes
 	commentRoutes routes.CommentRoutes
+	replyRoutes   routes.ReplyRoutes
 )
 
 func init() {
@@ -42,11 +44,13 @@ func init() {
 	userController = controllers.NewUserController(connection.DB)
 	postController = controllers.NewPostController(connection.DB)
 	commentController = controllers.NewCommentController(connection.DB)
+	replyController = controllers.NewReplyController(connection.DB)
 
 	authRoutes = routes.NewAuthRoutes(authController)
 	userRoutes = routes.NewUserRoutes(userController)
 	postRoutes = routes.NewPostRoutes(postController)
 	commentRoutes = routes.NewCommentRoutes(commentController)
+	replyRoutes = routes.NewReplyRoutes(replyController)
 }
 
 func main() {
@@ -66,6 +70,7 @@ func main() {
 	userRoutes.SetupRoutes(router)
 	postRoutes.SetupRoutes(router)
 	commentRoutes.SetupRoutes(router)
+	replyRoutes.SetupRoutes(router)
 
 	// run app
 	log.Fatal(server.Run(":" + config.GlobalConfig.ServerPort))

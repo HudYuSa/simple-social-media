@@ -8,14 +8,13 @@ import (
 )
 
 type UserResponse struct {
-	ID        *uuid.UUID `json:"id,omitempty"`
+	ID        uuid.UUID  `json:"id,omitempty"`
 	Name      string     `json:"name,omitempty"`
 	Email     string     `json:"email,omitempty"`
 	Role      string     `json:"role,omitempty"`
 	Photo     string     `json:"photo,omitempty"`
-	Provider  string     `json:"provider"`
-	CreatedAt time.Time  `json:"created_at"`
-	UpdatedAt time.Time  `json:"updated_at"`
+	CreatedAt *time.Time `json:"created_at,omitempty"`
+	UpdatedAt *time.Time `json:"updated_at,omitempty"`
 }
 
 type SignUpInput struct {
@@ -40,7 +39,7 @@ func UserToUserResponse(user *models.User) *UserResponse {
 		Name:      user.Name,
 		Email:     user.Email,
 		Photo:     user.Photo,
-		CreatedAt: user.CreatedAt,
-		UpdatedAt: user.UpdatedAt,
+		CreatedAt: CheckNil(user.CreatedAt),
+		UpdatedAt: CheckNil(user.UpdatedAt),
 	}
 }

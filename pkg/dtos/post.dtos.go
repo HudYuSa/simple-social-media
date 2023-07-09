@@ -8,13 +8,14 @@ import (
 )
 
 type PostResponse struct {
-	ID        *uuid.UUID `json:"id,omitempty" `
-	UserID    *uuid.UUID `json:"user_id,omitempty" `
-	Title     string     `json:"title,omitempty" `
-	Photo     string     `json:"photo,omitempty" `
-	Content   string     `json:"content,omitempty" `
-	CreatedAt time.Time  `json:"created_at,omitempty"`
-	UpdatedAt time.Time  `json:"updated_at,omitempty"`
+	ID        uuid.UUID     `json:"id,omitempty" `
+	UserID    *uuid.UUID    `json:"user_id,omitempty" `
+	Title     string        `json:"title,omitempty" `
+	Photo     string        `json:"photo,omitempty" `
+	Content   string        `json:"content,omitempty" `
+	CreatedAt *time.Time    `json:"created_at,omitempty"`
+	UpdatedAt *time.Time    `json:"updated_at,omitempty"`
+	User      *UserResponse `json:"user,omitempty"`
 }
 
 type CreatePostInput struct {
@@ -33,13 +34,16 @@ func PostToPostResponse(post *models.Post) *PostResponse {
 	if post == nil {
 		return nil
 	}
-	return &PostResponse{
+	postResponse := PostResponse{
 		ID:        post.ID,
-		UserID:    post.UserID,
+		UserID:    CheckNil(post.UserID),
 		Title:     post.Title,
 		Photo:     post.Photo,
 		Content:   post.Content,
-		CreatedAt: post.CreatedAt,
-		UpdatedAt: post.UpdatedAt,
+		CreatedAt: &post.CreatedAt,
+		UpdatedAt: &post.UpdatedAt,
+		User:      UserToUserResponse(CheckNil(post.User)),
 	}
+
+	return &postResponse
 }

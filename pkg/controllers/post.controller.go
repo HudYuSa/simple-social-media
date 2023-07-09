@@ -8,6 +8,7 @@ import (
 
 	"github.com/HudYuSa/comments/database/models"
 	"github.com/HudYuSa/comments/pkg/dtos"
+	"github.com/HudYuSa/comments/pkg/utils"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
@@ -33,8 +34,9 @@ func NewPostController(db *gorm.DB) PostController {
 func (pc *postController) GetPostByID(ctx *gin.Context) {
 	postId := ctx.Param("post_id")
 
+	// find post by id
 	post := models.Post{}
-	result := pc.DB.First(&post, "id = ?", postId)
+	result := pc.DB.Preload("User", utils.SelectColumnDB("ID", "Name")).First(&post, "id = ?", postId)
 
 	if result.Error != nil {
 		switch result.Error.Error() {
@@ -50,8 +52,9 @@ func (pc *postController) GetPostByID(ctx *gin.Context) {
 }
 
 func (pc *postController) GetAllPost(ctx *gin.Context) {
+	// find all post
 	posts := []models.Post{}
-	result := pc.DB.Find(&posts)
+	result := pc.DB.Preload("User", utils.SelectColumnDB("ID", "Name")).Find(&posts)
 
 	if result.Error != nil {
 		dtos.RespondWithError(ctx, http.StatusBadGateway, result.Error.Error())

@@ -25,7 +25,6 @@ func (cr *commentRoutes) SetupRoutes(rg *gin.RouterGroup) {
 
 	router.Use(middleware.DeserializeUser())
 	router.POST("/", cr.CommentController.CreateComment)
-	router.GET("/post/:post_id", cr.CommentController.GetPostComments)
-	router.GET("/:comment_id", cr.CommentController.GetCommentReplies)
+	router.GET("/:post_id", cr.CommentController.GetComments)
 	router.DELETE("/:comment_id", cr.CommentController.DeleteComment)
 }

@@ -1,15 +1,15 @@
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 CREATE TABLE
-    "users" (
+    IF NOT EXISTS "users" (
         "id" uuid NOT NULL DEFAULT (uuid_generate_v4()),
-        "name" varchar NOT NULL,
-        "email" varchar NOT NULL,
-        "photo" varchar NOT NULL,
-        "password" varchar NOT NULL,
-        "created_at" timestamp(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-        "updated_at" timestamp(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        "name" varchar(50) NOT NULL,
+        "email" varchar(50) NOT NULL,
+        "photo" varchar(250) NOT NULL,
+        "password" varchar(250) NOT NULL,
+        "created_at" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        "updated_at" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
         CONSTRAINT "users_pkey" PRIMARY KEY ("id")
     );
 
-CREATE UNIQUE INDEX "users_email_key" ON "users" ("email");
+CREATE UNIQUE INDEX IF NOT EXISTS "users_email_key" ON "users" ("email");
