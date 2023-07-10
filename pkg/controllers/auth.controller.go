@@ -75,7 +75,7 @@ func (ac *authController) SignUpUser(ctx *gin.Context) {
 		dtos.RespondWithError(ctx, http.StatusConflict, "user with that email already exist")
 		return
 	} else if result.Error != nil {
-		dtos.RespondWithError(ctx, http.StatusBadGateway, "something bad just happen")
+		dtos.RespondWithError(ctx, http.StatusBadGateway, result.Error.Error())
 		return
 	}
 

@@ -8,12 +8,16 @@ import (
 	"github.com/google/uuid"
 )
 
+// because this is a data transfer object
+// so everything can be null/empty
+// so make everything a pointer except for a type than can be detected by json omitempty as empty value
+
 type CommentResponse struct {
-	ID         uuid.UUID        `json:"id,omitempty"`
-	UserID     uuid.UUID        `json:"user_id,omitempty"`
-	PostID     uuid.UUID        `json:"post_id,omitempty"`
+	ID         *uuid.UUID       `json:"id,omitempty"`
+	UserID     *uuid.UUID       `json:"user_id,omitempty"`
+	PostID     *uuid.UUID       `json:"post_id,omitempty"`
 	Content    string           `json:"content,omitempty"`
-	CreatedAt  time.Time        `json:"created_at,omitempty"`
+	CreatedAt  *time.Time       `json:"created_at,omitempty"`
 	ReplyCount int64            `json:"reply_count"`
 	User       *UserResponse    `json:"user,omitempty"`
 	Post       *PostResponse    `json:"post,omitempty"`
@@ -39,17 +43,15 @@ func CommentToCommentResponse(comment *models.Comment) *CommentResponse {
 	fmt.Println(repliesResponse)
 
 	commentResponse := CommentResponse{
-		ID:        comment.ID,
-		UserID:    comment.UserID,
-		PostID:    comment.PostID,
+		ID:        CheckNil(comment.ID),
+		UserID:    CheckNil(comment.UserID),
+		PostID:    CheckNil(comment.PostID),
 		Content:   comment.Content,
-		CreatedAt: comment.CreatedAt,
+		CreatedAt: CheckNil(comment.CreatedAt),
 		User:      UserToUserResponse(CheckNil(comment.User)),
 		Post:      PostToPostResponse(CheckNil(comment.Post)),
 		Replies:   repliesResponse,
 	}
-	// if comment.ParentCommentID != nil {
-	// 	commentResponse.ParentCommentID = comment.ParentCommentID
-	// }
+
 	return &commentResponse
 }

@@ -7,8 +7,12 @@ import (
 	"github.com/google/uuid"
 )
 
+// because this is a data transfer object
+// so everything can be null/empty
+// so make everything a pointer except for a type than can be detected by json omitempty as empty value
+
 type UserResponse struct {
-	ID        uuid.UUID  `json:"id,omitempty"`
+	ID        *uuid.UUID `json:"id,omitempty"`
 	Name      string     `json:"name,omitempty"`
 	Email     string     `json:"email,omitempty"`
 	Role      string     `json:"role,omitempty"`
@@ -35,7 +39,7 @@ func UserToUserResponse(user *models.User) *UserResponse {
 		return nil
 	}
 	return &UserResponse{
-		ID:        user.ID,
+		ID:        CheckNil(user.ID),
 		Name:      user.Name,
 		Email:     user.Email,
 		Photo:     user.Photo,

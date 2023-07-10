@@ -94,7 +94,7 @@ func (pc *postController) CreatePost(ctx *gin.Context) {
 
 	// check for any possible error
 	if result.Error != nil {
-		dtos.RespondWithError(ctx, http.StatusBadGateway, "something bad just happen")
+		dtos.RespondWithError(ctx, http.StatusBadGateway, result.Error.Error())
 		return
 	}
 

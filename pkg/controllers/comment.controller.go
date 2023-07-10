@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 	"time"
@@ -29,13 +30,17 @@ func NewCommentController(db *gorm.DB) CommentController {
 func (cc *commentController) GetComments(ctx *gin.Context) {
 	postID := ctx.Param("post_id")
 	comments := []models.Comment{}
+	dataTimeString := ctx.Query("data-time")
 
 	var pageOffset int
 	var offsetErr error
+	var pageQuery string = ctx.Query("page")
 
-	if ctx.Query("page") == "" || ctx.Query("page") < "1" {
+	switch {
+	case pageQuery == "":
+	case pageQuery < "1":
 		pageOffset = 1
-	} else {
+	default:
 		pageOffset, offsetErr = strconv.Atoi(ctx.Query("page"))
 	}
 	if offsetErr != nil {
@@ -43,7 +48,19 @@ func (cc *commentController) GetComments(ctx *gin.Context) {
 		return
 	}
 
-	result := cc.DB.Preload("User", utils.SelectColumnDB("ID", "Name")).Where("post_id = ?", postID).Offset((pageOffset - 1) * 5).Limit(5).Order("created_at DESC").Find(&comments)
+	// if the request query don't have datatime then just use current time as datatime
+	if dataTimeString == "" {
+		dataTimeString = time.Now().Format(time.DateTime)
+	}
+	fmt.Println(dataTimeString)
+
+	dataTime, err := time.Parse(time.DateTime, dataTimeString)
+	if err != nil {
+		dtos.RespondWithError(ctx, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	result := cc.DB.Preload("User", utils.SelectColumnDB("ID", "Name")).Where("post_id = ? AND created_at < ?", postID, dataTime).Offset((pageOffset - 1) * 5).Limit(5).Order("created_at DESC").Find(&comments)
 	if result.Error != nil {
 		switch result.Error.Error() {
 		default:
@@ -55,8 +72,8 @@ func (cc *commentController) GetComments(ctx *gin.Context) {
 	commentsResponse := []*dtos.CommentResponse{}
 	for _, comment := range comments {
 		var replyCount int64
-		// for each comment find and count how many comment have the same
-		// parent_coment_id with the current comment id
+		// for each comment find and count how many replies have the same
+		// coment_id with the current comment id
 		result := cc.DB.Where("comment_id = ?", comment.ID).Find(&models.Reply{}).Count(&replyCount)
 		if result.Error != nil {
 			switch result.Error.Error() {
@@ -100,7 +117,7 @@ func (cc *commentController) CreateComment(ctx *gin.Context) {
 
 	// check for possible error
 	if result.Error != nil {
-		dtos.RespondWithError(ctx, http.StatusBadGateway, "something bad just happen")
+		dtos.RespondWithError(ctx, http.StatusBadGateway, result.Error.Error())
 		return
 	}
 

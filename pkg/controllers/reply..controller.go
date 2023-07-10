@@ -45,8 +45,9 @@ func (rc *replyController) GetReplies(ctx *gin.Context) {
 		return
 	}
 
-	result := rc.DB.Preload("User", utils.SelectColumnDB("ID", "Name")).Preload("Replies").Preload("Replies.User", utils.SelectColumnDB("ID", "Name")).Where("id = ?", commentID).Offset((pageOffset - 1) * 5).Limit(5).Order("created_at ASC").First(&comment)
-	// result := rc.DB.Preload("User", utils.SelectColumnDB("ID", "Name")).Preload("Replies.User").Preload("Replies.Mention").Where("comment_id = ?", commentID).Offset((pageOffset - 1) * 5).Limit(5).Order("created_at ASC").First(&comment)
+	result := rc.DB.Preload("User", utils.SelectColumnDB("ID", "Name")).Preload("Replies", func(db *gorm.DB) *gorm.DB {
+		return db.Offset((pageOffset - 1) * 10).Limit(10).Order("created_at ASC")
+	}).Preload("Replies.User", utils.SelectColumnDB("ID", "Name")).Preload("Replies.Mention", utils.SelectColumnDB("ID", "UserID")).Preload("Replies.Mention.User", utils.SelectColumnDB("ID", "Name")).Where("id = ?", commentID).First(&comment)
 	if result.Error != nil {
 		switch result.Error.Error() {
 		default:
@@ -54,11 +55,6 @@ func (rc *replyController) GetReplies(ctx *gin.Context) {
 		}
 		return
 	}
-
-	// trick untuk infinite scroll
-	// buat time stamp pas user nyari, trus cari datanya bedasarkan data sebelum user itu nyari
-	// jadi semua data yang dateng saat user sedang nyari bakalan g keliatan
-	// usernya harus nyari ulang kalo mau liat data yang baru itu
 
 	dtos.RespondWithJson(ctx, http.StatusOK, dtos.CommentToCommentResponse(&comment))
 }
@@ -86,7 +82,7 @@ func (rc *replyController) CreateReply(ctx *gin.Context) {
 
 	// check for possible error
 	if result.Error != nil {
-		dtos.RespondWithError(ctx, http.StatusBadGateway, "something bad just happen")
+		dtos.RespondWithError(ctx, http.StatusBadGateway, result.Error.Error())
 		return
 	}
 

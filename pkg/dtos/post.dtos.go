@@ -7,8 +7,12 @@ import (
 	"github.com/google/uuid"
 )
 
+// because this is a data transfer object
+// so everything can be null/empty
+// so make everything a pointer except for a type than can be detected by json omitempty as empty value
+
 type PostResponse struct {
-	ID        uuid.UUID     `json:"id,omitempty" `
+	ID        *uuid.UUID    `json:"id,omitempty" `
 	UserID    *uuid.UUID    `json:"user_id,omitempty" `
 	Title     string        `json:"title,omitempty" `
 	Photo     string        `json:"photo,omitempty" `
@@ -35,7 +39,7 @@ func PostToPostResponse(post *models.Post) *PostResponse {
 		return nil
 	}
 	postResponse := PostResponse{
-		ID:        post.ID,
+		ID:        CheckNil(post.ID),
 		UserID:    CheckNil(post.UserID),
 		Title:     post.Title,
 		Photo:     post.Photo,

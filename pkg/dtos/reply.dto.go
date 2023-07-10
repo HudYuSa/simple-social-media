@@ -7,13 +7,17 @@ import (
 	"github.com/google/uuid"
 )
 
+// because this is a data transfer object
+// so everything can be null/empty
+// so make everything a pointer except for a type than can be detected by json omitempty as empty value
+
 type ReplyResponse struct {
-	ID        uuid.UUID      `json:"id,omitempty"`
-	UserID    uuid.UUID      `json:"user_id,omitempty"`
-	CommentID uuid.UUID      `json:"comment_id"`
+	ID        *uuid.UUID     `json:"id,omitempty"`
+	UserID    *uuid.UUID     `json:"user_id,omitempty"`
+	CommentID *uuid.UUID     `json:"comment_id,omitempty"`
 	MentionID *uuid.UUID     `json:"mention_id,omitempty"`
 	Content   string         `json:"content,omitempty"`
-	CreatedAt time.Time      `json:"created_at,omitempty"`
+	CreatedAt *time.Time     `json:"created_at,omitempty"`
 	User      *UserResponse  `json:"user,omitempty"`
 	Post      *PostResponse  `json:"post,omitempty"`
 	Mention   *ReplyResponse `json:"mention,omitempty"`
@@ -30,11 +34,12 @@ func ReplyToReplyResponse(reply *models.Reply) *ReplyResponse {
 		return nil
 	}
 	commentResponse := ReplyResponse{
-		ID:        reply.ID,
-		UserID:    reply.UserID,
-		CommentID: reply.CommentID,
+		ID:        CheckNil(reply.ID),
+		UserID:    CheckNil(reply.UserID),
+		CommentID: CheckNil(reply.CommentID),
+		MentionID: reply.MentionID,
 		Content:   reply.Content,
-		CreatedAt: reply.CreatedAt,
+		CreatedAt: CheckNil(reply.CreatedAt),
 		User:      UserToUserResponse(CheckNil(reply.User)),
 		Mention:   ReplyToReplyResponse(reply.Mention),
 	}
