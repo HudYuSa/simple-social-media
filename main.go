@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"net/http"
+	"os/exec"
 
 	"github.com/HudYuSa/comments/internal/config"
 	"github.com/HudYuSa/comments/internal/connection"
@@ -30,6 +31,13 @@ var (
 )
 
 func init() {
+	migrateUp := exec.Command("make", "migrate_up")
+
+	migrateErr := migrateUp.Run()
+	if migrateErr != nil {
+		panic(migrateErr)
+	}
+
 	server = gin.Default()
 	err := config.LoadConfig(".env")
 	if err != nil {
