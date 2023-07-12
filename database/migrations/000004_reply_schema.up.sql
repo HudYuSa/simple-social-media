@@ -10,7 +10,7 @@ CREATE TABLE
         CONSTRAINT "replies_pkey" PRIMARY KEY ("id"),
         CONSTRAINT "fk_user" FOREIGN KEY("user_id") REFERENCES "users"("id") ON DELETE CASCADE,
         CONSTRAINT "fk_parent_comment" FOREIGN KEY("comment_id") REFERENCES "comments"("id") ON DELETE CASCADE,
-        CONSTRAINT "fk_mention" FOREIGN KEY("mention_id") REFERENCES "replies"("id") ON DELETE
+        CONSTRAINT "fk_mention" FOREIGN KEY("mention_id") REFERENCES "users"("id") ON DELETE
         SET NULL ON UPDATE
         SET NULL
     )

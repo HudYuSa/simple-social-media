@@ -17,19 +17,6 @@ import (
 
 var DB *gorm.DB
 
-// migrate_up:
-// migrate -path database/migrations/ -database "postgres://cyicsnej:pkzAVWH--U1AcE4IMQb3rfWvyE-gYK22@arjuna.db.elephantsql.com/cyicsnej?sslmode=disable" -verbose up
-
-// migrate_down:
-// migrate -path database/migrations/ -database "postgres://cyicsnej:pkzAVWH--U1AcE4IMQb3rfWvyE-gYK22@arjuna.db.elephantsql.com/cyicsnej?sslmode=disable" -verbose down
-
-// migrateUp := exec.Command("make", "migrate_up")
-
-// migrateErr := migrateUp.Run()
-// if migrateErr != nil {
-// 	panic(migrateErr)
-// }
-
 func ConnectDB(config *config.Config) {
 	var err error
 	// dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=disable TimeZone=Asia/Shanghai", config.DBHost, config.DBUserName, config.DBUserPassword, config.DBName, config.DBPort)
@@ -63,8 +50,8 @@ func ConnectDB(config *config.Config) {
 		log.Fatal(err)
 	}
 	err = m.Up()
-	if err != nil {
-		log.Fatal(err)
+	if err != nil && err != migrate.ErrNoChange {
+		log.Fatal(err.Error())
 	}
 
 	fmt.Println("? Connected Successfully to the Database")

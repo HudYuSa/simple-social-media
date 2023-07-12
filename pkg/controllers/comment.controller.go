@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"fmt"
 	"net/http"
 	"strconv"
 	"time"
@@ -37,12 +36,12 @@ func (cc *commentController) GetComments(ctx *gin.Context) {
 	var pageQuery string = ctx.Query("page")
 
 	switch {
-	case pageQuery == "":
-	case pageQuery < "1":
+	case pageQuery == "", pageQuery < "1":
 		pageOffset = 1
 	default:
-		pageOffset, offsetErr = strconv.Atoi(ctx.Query("page"))
+		pageOffset, offsetErr = strconv.Atoi(pageQuery)
 	}
+	pageOffset = (pageOffset - 1) * 5
 	if offsetErr != nil {
 		dtos.RespondWithError(ctx, http.StatusBadRequest, offsetErr.Error())
 		return
@@ -52,7 +51,6 @@ func (cc *commentController) GetComments(ctx *gin.Context) {
 	if dataTimeString == "" {
 		dataTimeString = time.Now().Format(time.DateTime)
 	}
-	fmt.Println(dataTimeString)
 
 	dataTime, err := time.Parse(time.DateTime, dataTimeString)
 	if err != nil {
@@ -60,7 +58,21 @@ func (cc *commentController) GetComments(ctx *gin.Context) {
 		return
 	}
 
-	result := cc.DB.Preload("User", utils.SelectColumnDB("ID", "Name")).Where("post_id = ? AND created_at < ?", postID, dataTime).Offset((pageOffset - 1) * 5).Limit(5).Order("created_at DESC").Find(&comments)
+	// result := cc.DB.Preload("User", utils.SelectColumnDB("ID", "Name")).Preload("Replies").Where("post_id = ? AND created_at < ?", postID, dataTime).Find(&comments).Offset((pageOffset - 1) * 5).Limit(5).Order("created_at DESC")
+	// result := cc.DB.Raw("SELECT c.*, COUNT(r.id) as reply_count FROM comments c LEFT JOIN replies r ON c.id = r.comment_id WHERE post_id = ? AND c.created_at < ? GROUP BY c.id ORDER BY created_at DESC OFFSET ? LIMIT ? ", postID, dataTime, pageOffset, 5).Scan(&comments)
+
+	result := cc.DB.
+		Preload("User", utils.SelectColumnDB("ID", "Name")).
+		Table("comments c").
+		Select("c.*, COUNT(r.id) as reply_count").
+		Where("post_id = ? AND c.created_at < ? ", postID, dataTime).
+		Joins("LEFT JOIN replies r on r.comment_id = c.id").
+		Group("c.id").
+		Order("c.created_at DESC").
+		Offset(pageOffset).
+		Limit(5).
+		Find(&comments)
+
 	if result.Error != nil {
 		switch result.Error.Error() {
 		default:
@@ -71,26 +83,8 @@ func (cc *commentController) GetComments(ctx *gin.Context) {
 
 	commentsResponse := []*dtos.CommentResponse{}
 	for _, comment := range comments {
-		var replyCount int64
-		// for each comment find and count how many replies have the same
-		// coment_id with the current comment id
-		result := cc.DB.Where("comment_id = ?", comment.ID).Find(&models.Reply{}).Count(&replyCount)
-		if result.Error != nil {
-			switch result.Error.Error() {
-			default:
-				dtos.RespondWithError(ctx, http.StatusBadGateway, result.Error.Error())
-			}
-			return
-		}
-		commentResponse := dtos.CommentToCommentResponse(&comment)
-		commentResponse.ReplyCount = replyCount
-
-		commentsResponse = append(commentsResponse, commentResponse)
+		commentsResponse = append(commentsResponse, dtos.CommentToCommentResponse(&comment))
 	}
-	// trick untuk infinite scroll
-	// buat time stamp pas user nyari, trus cari datanya bedasarkan data sebelum user itu nyari
-	// jadi semua data yang dateng saat user sedang nyari bakalan g keliatan
-	// usernya harus nyari ulang kalo mau liat data yang baru itu
 
 	dtos.RespondWithJson(ctx, http.StatusOK, commentsResponse)
 }

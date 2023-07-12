@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 	"time"
@@ -30,24 +31,36 @@ func NewReplyController(db *gorm.DB) ReplyController {
 
 func (rc *replyController) GetReplies(ctx *gin.Context) {
 	commentID := ctx.Param("comment_id")
-	comment := models.Comment{}
+	replies := []models.Reply{}
 
 	var pageOffset int
 	var offsetErr error
+	var pageQuery string = ctx.Query("page")
 
-	if ctx.Query("page") == "" || ctx.Query("page") < "1" {
+	switch {
+	case pageQuery == "", pageQuery < "1":
 		pageOffset = 1
-	} else {
-		pageOffset, offsetErr = strconv.Atoi(ctx.Query("page"))
+	default:
+		pageOffset, offsetErr = strconv.Atoi(pageQuery)
 	}
+	pageOffset = (pageOffset - 1) * 5
 	if offsetErr != nil {
 		dtos.RespondWithError(ctx, http.StatusBadRequest, offsetErr.Error())
 		return
 	}
 
-	result := rc.DB.Preload("User", utils.SelectColumnDB("ID", "Name")).Preload("Replies", func(db *gorm.DB) *gorm.DB {
-		return db.Offset((pageOffset - 1) * 10).Limit(10).Order("created_at ASC")
-	}).Preload("Replies.User", utils.SelectColumnDB("ID", "Name")).Preload("Replies.Mention", utils.SelectColumnDB("ID", "UserID")).Preload("Replies.Mention.User", utils.SelectColumnDB("ID", "Name")).Where("id = ?", commentID).First(&comment)
+	fmt.Println(pageOffset)
+	// result := rc.DB.Preload("User", utils.SelectColumnDB("ID", "Name")).Preload("Replies", func(db *gorm.DB) *gorm.DB {
+	// 	return db.Offset((pageOffset - 1) * 10).Limit(10).Order("created_at ASC")
+	// }).Preload("Replies.User", utils.SelectColumnDB("ID", "Name")).Preload("Replies.Mention", utils.SelectColumnDB("ID", "UserID")).Preload("Replies.Mention.User", utils.SelectColumnDB("ID", "Name")).Where("id = ?", commentID).First(&comment)
+	result := rc.DB.Preload("User", utils.SelectColumnDB("ID", "Name")).
+		Preload("Mention", utils.SelectColumnDB("ID", "Name")).
+		Where("comment_id = ?", commentID).
+		Offset(pageOffset).
+		Limit(5).
+		Order("created_at ASC").
+		Find(&replies)
+
 	if result.Error != nil {
 		switch result.Error.Error() {
 		default:
@@ -56,7 +69,12 @@ func (rc *replyController) GetReplies(ctx *gin.Context) {
 		return
 	}
 
-	dtos.RespondWithJson(ctx, http.StatusOK, dtos.CommentToCommentResponse(&comment))
+	repliesResponse := []dtos.ReplyResponse{}
+	for _, reply := range replies {
+		repliesResponse = append(repliesResponse, *dtos.ReplyToReplyResponse(&reply))
+	}
+
+	dtos.RespondWithJson(ctx, http.StatusOK, repliesResponse)
 }
 
 func (rc *replyController) CreateReply(ctx *gin.Context) {

@@ -60,6 +60,10 @@ func main() {
 	// middleware
 	server.Use(cors.New(corsConfig))
 
+	server.GET("/", func(ctx *gin.Context) {
+		ctx.Redirect(http.StatusMovedPermanently, "/api/test")
+	})
+
 	router := server.Group("/api")
 	router.GET("/test", func(ctx *gin.Context) {
 		ctx.JSON(http.StatusOK, gin.H{"message": "welcome to this project"})

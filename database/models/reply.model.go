@@ -15,5 +15,5 @@ type Reply struct {
 	Content   string    `gorm:"not null"`
 	CreatedAt time.Time `gorm:"not null"`
 	User      User      `gorm:"foreignKey:UserID"`
-	Mention   *Reply    `gorm:"foreignKey:MentionID"`
+	Mention   *User     `gorm:"foreignKey:MentionID"`
 }

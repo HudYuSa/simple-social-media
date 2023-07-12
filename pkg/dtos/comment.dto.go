@@ -1,7 +1,6 @@
 package dtos
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/HudYuSa/comments/database/models"
@@ -18,7 +17,7 @@ type CommentResponse struct {
 	PostID     *uuid.UUID       `json:"post_id,omitempty"`
 	Content    string           `json:"content,omitempty"`
 	CreatedAt  *time.Time       `json:"created_at,omitempty"`
-	ReplyCount int64            `json:"reply_count"`
+	ReplyCount uint64           `json:"reply_count"`
 	User       *UserResponse    `json:"user,omitempty"`
 	Post       *PostResponse    `json:"post,omitempty"`
 	Replies    []ReplyResponse  `json:"replies,omitempty"`
@@ -40,17 +39,17 @@ func CommentToCommentResponse(comment *models.Comment) *CommentResponse {
 		replyResponse := *ReplyToReplyResponse(&r)
 		repliesResponse = append(repliesResponse, replyResponse)
 	}
-	fmt.Println(repliesResponse)
 
 	commentResponse := CommentResponse{
-		ID:        CheckNil(comment.ID),
-		UserID:    CheckNil(comment.UserID),
-		PostID:    CheckNil(comment.PostID),
-		Content:   comment.Content,
-		CreatedAt: CheckNil(comment.CreatedAt),
-		User:      UserToUserResponse(CheckNil(comment.User)),
-		Post:      PostToPostResponse(CheckNil(comment.Post)),
-		Replies:   repliesResponse,
+		ID:         CheckNil(comment.ID),
+		UserID:     CheckNil(comment.UserID),
+		PostID:     CheckNil(comment.PostID),
+		Content:    comment.Content,
+		ReplyCount: comment.ReplyCount,
+		CreatedAt:  CheckNil(comment.CreatedAt),
+		User:       UserToUserResponse(CheckNil(comment.User)),
+		Post:       PostToPostResponse(CheckNil(comment.Post)),
+		Replies:    repliesResponse,
 	}
 
 	return &commentResponse
