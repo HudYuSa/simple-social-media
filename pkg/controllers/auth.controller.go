@@ -110,13 +110,13 @@ func (ac *authController) SignInUser(ctx *gin.Context) {
 	}
 
 	// Generate Tokens
-	accessToken, err := utils.CreateToken(config.GlobalConfig.AccessTokenExpiresIn, dbUser.ID, config.GlobalConfig.AccessTokenPrivateKey)
+	accessToken, err := utils.CreateToken(config.GlobalConfig.AccessTokenExpiresIn, &dbUser, config.GlobalConfig.AccessTokenPrivateKey)
 	if err != nil {
 		dtos.RespondWithError(ctx, http.StatusInternalServerError, err.Error())
 		return
 	}
 
-	refreshToken, err := utils.CreateToken(config.GlobalConfig.RefreshTokenExpiresIn, dbUser.ID, config.GlobalConfig.RefreshTokenPrivateKey)
+	refreshToken, err := utils.CreateToken(config.GlobalConfig.RefreshTokenExpiresIn, &dbUser, config.GlobalConfig.RefreshTokenPrivateKey)
 	if err != nil {
 		dtos.RespondWithError(ctx, http.StatusInternalServerError, err.Error())
 		return
@@ -162,7 +162,7 @@ func (ac *authController) RefreshAccessToken(ctx *gin.Context) {
 	}
 
 	// reissue new accesstoken
-	accessToken, err := utils.CreateToken(config.GlobalConfig.AccessTokenExpiresIn, user.ID, config.GlobalConfig.AccessTokenPrivateKey)
+	accessToken, err := utils.CreateToken(config.GlobalConfig.AccessTokenExpiresIn, &user, config.GlobalConfig.AccessTokenPrivateKey)
 	if err != nil {
 		dtos.RespondWithError(ctx, http.StatusInternalServerError, err.Error())
 		return

@@ -3,11 +3,14 @@ package main
 import (
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/HudYuSa/comments/internal/config"
 	"github.com/HudYuSa/comments/internal/connection"
 	"github.com/HudYuSa/comments/pkg/controllers"
+	"github.com/HudYuSa/comments/pkg/middleware"
 	"github.com/HudYuSa/comments/pkg/routes"
+	"github.com/HudYuSa/comments/pkg/utils"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
@@ -55,14 +58,17 @@ func init() {
 
 func main() {
 	//set allowed origins
-	corsConfig.AllowOrigins = []string{"http://localhost:8000", config.GlobalConfig.ClientOrigin}
+	corsConfig.AllowOrigins = []string{"http://localhost:8000", config.GlobalConfig.ClientOrigin, "http://localhost:5173"}
 
 	// middleware
-	server.Use(cors.New(corsConfig))
-
-	server.GET("/", func(ctx *gin.Context) {
-		ctx.Redirect(http.StatusMovedPermanently, "/api/test")
-	})
+	server.Use(cors.New(cors.Config{
+		AllowOrigins:     []string{"http://localhost:8000", config.GlobalConfig.ClientOrigin, "http://localhost:5173"},
+		AllowMethods:     []string{"PUT", "PATCH"},
+		AllowHeaders:     []string{"*"},
+		ExposeHeaders:    []string{"Content-Length"},
+		AllowCredentials: true,
+		MaxAge:           12 * time.Hour}))
+	server.Use(middleware.CORSMiddleware())
 
 	router := server.Group("/api")
 	router.GET("/test", func(ctx *gin.Context) {
@@ -76,6 +82,24 @@ func main() {
 	commentRoutes.SetupRoutes(router)
 	replyRoutes.SetupRoutes(router)
 
+	// firestore
+	client, err := utils.InitializeFirestore()
+	if err != nil {
+		log.Fatal(err)
+	}
+	// ngrok
+	tun, err := utils.RunNgrok()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// update firestore url
+	err = utils.UpdateUrl(client, tun)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	// run app
-	log.Fatal(server.Run(":" + config.GlobalConfig.ServerPort))
+	log.Fatal(http.Serve(tun, server.Handler()))
+	// log.Fatal(server.Run(":" + config.GlobalConfig.ServerPort))
 }

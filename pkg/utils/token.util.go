@@ -6,13 +6,14 @@ import (
 	"strings"
 	"time"
 
+	"github.com/HudYuSa/comments/database/models"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt"
 )
 
 // private dan public tokennya adalah utf-8 yang di encode ke base64 saat akan membuat atau memvalidasi token maka tokennya di kembalikan ke utf-8 untuk masuk di func jwt.ParseRSAPrivateKeyFromPEM
 
-func CreateToken(ttl time.Duration, payload any, privateKey string) (string, error) {
+func CreateToken(ttl time.Duration, user *models.User, privateKey string) (string, error) {
 	decodedPrivateKey, err := base64.StdEncoding.DecodeString(privateKey)
 	if err != nil {
 		return "", fmt.Errorf("could not decode key: %w", err)
@@ -27,7 +28,7 @@ func CreateToken(ttl time.Duration, payload any, privateKey string) (string, err
 	now := time.Now().UTC()
 
 	claims := jwt.MapClaims{
-		"sub": payload,
+		"sub": user,
 		"exp": now.Add(ttl).Unix(),
 		"iat": now.Unix(),
 		"nbf": now.Unix(),
@@ -42,7 +43,7 @@ func CreateToken(ttl time.Duration, payload any, privateKey string) (string, err
 	return token, nil
 }
 
-func ValidateToken(token string, publicKey string) (any, error) {
+func ValidateToken(token string, publicKey string) (*models.User, error) {
 	decodedPublicKey, err := base64.StdEncoding.DecodeString(publicKey)
 	if err != nil {
 		return nil, fmt.Errorf("could not decode: %w", err)
@@ -50,7 +51,7 @@ func ValidateToken(token string, publicKey string) (any, error) {
 
 	key, err := jwt.ParseRSAPublicKeyFromPEM(decodedPublicKey)
 	if err != nil {
-		return "", fmt.Errorf("validate: parse key: %w", err)
+		return nil, fmt.Errorf("validate: parse key: %w", err)
 	}
 
 	parsedToken, err := jwt.Parse(token, func(t *jwt.Token) (interface{}, error) {
@@ -71,7 +72,7 @@ func ValidateToken(token string, publicKey string) (any, error) {
 	if !ok || !parsedToken.Valid {
 		return nil, fmt.Errorf("validate: invalid token")
 	}
-	return claims["sub"], nil
+	return claims["sub"].(*models.User), nil
 }
 
 func GetToken(ctx *gin.Context, cookieName string, headerName string) (token string) {

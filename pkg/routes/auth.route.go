@@ -29,5 +29,5 @@ func (ar *authRoutes) SetupRoutes(rg *gin.RouterGroup) {
 
 	router.Use(middleware.DeserializeUser())
 	router.GET("/logout", ar.AuthController.LogOutUser)
-	router.DELETE("/", ar.AuthController.DeleteUser)
+	router.DELETE("", ar.AuthController.DeleteUser)
 }

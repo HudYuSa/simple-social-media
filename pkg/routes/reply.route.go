@@ -24,7 +24,7 @@ func (rr *replyRoutes) SetupRoutes(rg *gin.RouterGroup) {
 	router := rg.Group("replies")
 
 	router.Use(middleware.DeserializeUser())
-	router.POST("/", rr.ReplyController.CreateReply)
+	router.POST("", rr.ReplyController.CreateReply)
 	router.GET("/:comment_id", rr.ReplyController.GetReplies)
 	router.DELETE("/:reply_id", rr.ReplyController.DeleteReply)
 }

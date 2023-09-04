@@ -9,3 +9,6 @@ migrate_down:
 
 gen_migrate:
 	migrate create -ext sql -dir database/migrations -seq $(name)
+
+run_ngrok_server:
+	NGROK_AUTHTOKEN="2UhNNv0KaEN2ZvdYjMMXlUMdoTD_34Tcto1oQ4dcBpviC22Cw" make run_server
