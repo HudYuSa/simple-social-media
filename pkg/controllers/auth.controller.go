@@ -43,12 +43,6 @@ func (ac *authController) SignUpUser(ctx *gin.Context) {
 		return
 	}
 
-	// match the password with confirm password
-	if payload.Password != payload.PasswordConfirm {
-		dtos.RespondWithError(ctx, http.StatusBadRequest, "email or password is invalid")
-		return
-	}
-
 	// hash the user password
 	hashedPassword, err := utils.HashPassword(payload.Password)
 	if err != nil {

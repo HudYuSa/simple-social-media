@@ -3,6 +3,7 @@ module github.com/HudYuSa/comments
 go 1.20
 
 require (
+	cloud.google.com/go/firestore v1.12.0
 	github.com/gin-contrib/cors v1.4.0
 	github.com/gin-gonic/gin v1.9.0
 	github.com/golang-jwt/jwt v3.2.2+incompatible
@@ -11,6 +12,7 @@ require (
 	github.com/spf13/viper v1.15.0
 	golang.ngrok.com/ngrok v1.3.1
 	golang.org/x/crypto v0.12.0
+	google.golang.org/api v0.138.0
 	gorm.io/driver/postgres v1.5.2
 	gorm.io/gorm v1.25.1
 )
@@ -19,7 +21,6 @@ require (
 	cloud.google.com/go v0.110.7 // indirect
 	cloud.google.com/go/compute v1.23.0 // indirect
 	cloud.google.com/go/compute/metadata v0.2.3 // indirect
-	cloud.google.com/go/firestore v1.12.0 // indirect
 	cloud.google.com/go/longrunning v0.5.1 // indirect
 	github.com/bytedance/sonic v1.8.0 // indirect
 	github.com/chenzhuoyu/base64x v0.0.0-20221115062448-fe3a3abad311 // indirect
@@ -58,7 +59,6 @@ require (
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/pelletier/go-toml/v2 v2.0.6 // indirect
-	github.com/rs/cors v1.9.0 // indirect
 	github.com/spf13/afero v1.9.3 // indirect
 	github.com/spf13/cast v1.5.0 // indirect
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
@@ -79,7 +79,6 @@ require (
 	golang.org/x/text v0.12.0 // indirect
 	golang.org/x/time v0.3.0 // indirect
 	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2 // indirect
-	google.golang.org/api v0.138.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/genproto v0.0.0-20230822172742-b8732ec3820d // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20230822172742-b8732ec3820d // indirect
