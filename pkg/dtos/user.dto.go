@@ -22,11 +22,9 @@ type UserResponse struct {
 }
 
 type SignUpInput struct {
-	Name            string `json:"name" binding:"required"`
-	Email           string `json:"email" binding:"required,email"`
-	Password        string `json:"password" binding:"required,min=8"`
-	PasswordConfirm string `json:"password_confirm" binding:"required"`
-	Photo           string `json:"photo"`
+	Name     string `json:"name" binding:"required"`
+	Email    string `json:"email" binding:"required,email"`
+	Password string `json:"password" binding:"required,min=8"`
 }
 
 type SignInInput struct {

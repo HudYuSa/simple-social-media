@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"fmt"
 	"net/http"
 	"reflect"
 	"strings"
@@ -56,7 +57,6 @@ func (ac *authController) SignUpUser(ctx *gin.Context) {
 		Name:      payload.Name,
 		Email:     strings.ToLower(payload.Email),
 		Password:  hashedPassword,
-		Photo:     payload.Photo,
 		CreatedAt: now,
 		UpdatedAt: now,
 	}
@@ -93,33 +93,43 @@ func (ac *authController) SignInUser(ctx *gin.Context) {
 
 	// if there's an error when fetching from db
 	if result.Error != nil {
-		dtos.RespondWithError(ctx, http.StatusBadGateway, "invalid email or password")
+		dtos.RespondWithError(ctx, http.StatusUnauthorized, "invalid email or password")
 		return
 	}
 
 	// verify user password
 	if err := utils.VerifyPassword(dbUser.Password, payload.Password); err != nil {
-		dtos.RespondWithError(ctx, http.StatusBadGateway, "invalid email or password")
+		dtos.RespondWithError(ctx, http.StatusUnauthorized, "invalid email or password")
 		return
 	}
 
 	// Generate Tokens
-	accessToken, err := utils.CreateToken(config.GlobalConfig.AccessTokenExpiresIn, &dbUser, config.GlobalConfig.AccessTokenPrivateKey)
+	accessToken, err := utils.CreateToken(config.GlobalConfig.AccessTokenExpiresIn, dtos.UserToUserResponse(&dbUser), config.GlobalConfig.AccessTokenPrivateKey)
 	if err != nil {
 		dtos.RespondWithError(ctx, http.StatusInternalServerError, err.Error())
 		return
 	}
 
-	refreshToken, err := utils.CreateToken(config.GlobalConfig.RefreshTokenExpiresIn, &dbUser, config.GlobalConfig.RefreshTokenPrivateKey)
+	refreshToken, err := utils.CreateToken(config.GlobalConfig.RefreshTokenExpiresIn, dtos.UserToUserResponse(&dbUser), config.GlobalConfig.RefreshTokenPrivateKey)
 	if err != nil {
 		dtos.RespondWithError(ctx, http.StatusInternalServerError, err.Error())
 		return
 	}
+
+	// Get the client's request host
+	host := ctx.Request.Host
+
+	// Extract the domain from the request host
+	parts := strings.Split(host, ":")
+	domain := parts[0]
 
 	// set accesstoken and refresh token to client cookie
 	// max age time 60 so it become minute
-	ctx.SetCookie("access_token", accessToken, config.GlobalConfig.AccessTokenMaxAge*60, "/", "localhost", false, true)
-	ctx.SetCookie("refresh_token", refreshToken, config.GlobalConfig.RefreshTokenMaxAge*60, "/", "localhost", false, true)
+	// set samesite to none
+	fmt.Println(domain)
+	ctx.SetSameSite(http.SameSiteNoneMode)
+	ctx.SetCookie("access_token", accessToken, config.GlobalConfig.AccessTokenMaxAge*60, "/", domain, true, true)
+	ctx.SetCookie("refresh_token", refreshToken, config.GlobalConfig.RefreshTokenMaxAge*60, "/", domain, true, true)
 	ctx.SetCookie("logged_in", "true", config.GlobalConfig.AccessTokenMaxAge, "/", "localhost", false, false)
 
 	dtos.RespondWithJson(ctx, http.StatusOK, gin.H{
@@ -156,7 +166,7 @@ func (ac *authController) RefreshAccessToken(ctx *gin.Context) {
 	}
 
 	// reissue new accesstoken
-	accessToken, err := utils.CreateToken(config.GlobalConfig.AccessTokenExpiresIn, &user, config.GlobalConfig.AccessTokenPrivateKey)
+	accessToken, err := utils.CreateToken(config.GlobalConfig.AccessTokenExpiresIn, dtos.UserToUserResponse(&user), config.GlobalConfig.AccessTokenPrivateKey)
 	if err != nil {
 		dtos.RespondWithError(ctx, http.StatusInternalServerError, err.Error())
 		return
@@ -197,10 +207,3 @@ func (ac *authController) DeleteUser(ctx *gin.Context) {
 
 	dtos.RespondWithJson(ctx, http.StatusNoContent, "successfully delete user")
 }
-
-// func (ac *authController) ForgotPassword(ctx *gin.Context) {
-// }
-
-// func (ac *authController) ResetPassword(ctx *gin.Context) {
-// 	panic("not implemented") // TODO: Implement
-// }

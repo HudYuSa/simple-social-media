@@ -6,14 +6,14 @@ import (
 	"strings"
 	"time"
 
-	"github.com/HudYuSa/comments/database/models"
+	"github.com/HudYuSa/comments/pkg/dtos"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt"
 )
 
 // private dan public tokennya adalah utf-8 yang di encode ke base64 saat akan membuat atau memvalidasi token maka tokennya di kembalikan ke utf-8 untuk masuk di func jwt.ParseRSAPrivateKeyFromPEM
 
-func CreateToken(ttl time.Duration, user *models.User, privateKey string) (string, error) {
+func CreateToken(ttl time.Duration, user *dtos.UserResponse, privateKey string) (string, error) {
 	decodedPrivateKey, err := base64.StdEncoding.DecodeString(privateKey)
 	if err != nil {
 		return "", fmt.Errorf("could not decode key: %w", err)
@@ -43,7 +43,7 @@ func CreateToken(ttl time.Duration, user *models.User, privateKey string) (strin
 	return token, nil
 }
 
-func ValidateToken(token string, publicKey string) (*models.User, error) {
+func ValidateToken(token string, publicKey string) (map[string]any, error) {
 	decodedPublicKey, err := base64.StdEncoding.DecodeString(publicKey)
 	if err != nil {
 		return nil, fmt.Errorf("could not decode: %w", err)
@@ -72,7 +72,8 @@ func ValidateToken(token string, publicKey string) (*models.User, error) {
 	if !ok || !parsedToken.Valid {
 		return nil, fmt.Errorf("validate: invalid token")
 	}
-	return claims["sub"].(*models.User), nil
+	fmt.Println(claims["sub"])
+	return claims["sub"].(map[string]any), nil
 }
 
 func GetToken(ctx *gin.Context, cookieName string, headerName string) (token string) {

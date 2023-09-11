@@ -8,7 +8,6 @@ import (
 	"github.com/HudYuSa/comments/internal/config"
 	"github.com/HudYuSa/comments/internal/connection"
 	"github.com/HudYuSa/comments/pkg/controllers"
-	"github.com/HudYuSa/comments/pkg/middleware"
 	"github.com/HudYuSa/comments/pkg/routes"
 	"github.com/HudYuSa/comments/pkg/utils"
 	"github.com/gin-contrib/cors"
@@ -16,8 +15,7 @@ import (
 )
 
 var (
-	server     *gin.Engine
-	corsConfig cors.Config
+	server *gin.Engine
 
 	authController    controllers.AuthController
 	userController    controllers.UserController
@@ -38,7 +36,6 @@ func init() {
 	if err != nil {
 		log.Fatal("? Could not load environment variables ", err)
 	}
-	corsConfig = cors.DefaultConfig()
 
 	// connect ke database
 	connection.ConnectDB(&config.GlobalConfig)
@@ -57,18 +54,20 @@ func init() {
 }
 
 func main() {
-	//set allowed origins
-	corsConfig.AllowOrigins = []string{"http://localhost:8000", config.GlobalConfig.ClientOrigin, "http://localhost:5173"}
 
-	// middleware
+	// // middleware
 	server.Use(cors.New(cors.Config{
 		AllowOrigins:     []string{"http://localhost:8000", config.GlobalConfig.ClientOrigin, "http://localhost:5173"},
-		AllowMethods:     []string{"PUT", "PATCH"},
-		AllowHeaders:     []string{"*"},
+		AllowMethods:     []string{"POST", "OPTIONS", "GET", "PUT", "PATCH"},
+		AllowHeaders:     []string{"Content-Type", "Content-Length", "Accept-Encoding", "X-CSRF-Token", " Authorization", " accept", "origin", "Cache-Control", " X-Requested-With", "ngrok-skip-browser-warning"},
 		ExposeHeaders:    []string{"Content-Length"},
 		AllowCredentials: true,
 		MaxAge:           12 * time.Hour}))
-	server.Use(middleware.CORSMiddleware())
+
+	// Handle CORS preflight requests
+	server.OPTIONS("/*any", func(ctx *gin.Context) {
+		ctx.Status(http.StatusOK)
+	})
 
 	router := server.Group("/api")
 	router.GET("/test", func(ctx *gin.Context) {
